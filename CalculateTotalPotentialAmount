@@ -1,0 +1,24 @@
+void CalculateTotalPotentialAmount(int PotentialID)
+{
+  //INSTRUCTIONS:
+  //Workflow Settings:
+  //Module: Calls
+  //Triger: Record Creation
+  //Criteria: Optional
+  //Action: Instant Action > Custom Function
+  //NOTE: Script is based on a Potential with "One Tiem Fee", "Professional Services", and "Hardware" fields, these can be changed based on your requirements.
+  //******************************************
+	PotentialDetails = zoho.crm.getRecordById("Potentials",input.PotentialID);
+
+	OneTimeFee = PotentialDetails.get("One Time Fee").toLong();
+	ProfessionalServices = PotentialDetails.get("Professional Services").toLong();
+	Hardware = PotentialDetails.get("Hardware").toLong();
+
+	PotentialTotal = OneTimeFee + ProfessionalServices + Hardware;
+	PotentialTotalstr = PotentialTotal.toString();
+
+	PotentialUpdateMap = Map();
+	PotentialUpdateMap.put("Calculated Total Amount", PotentialTotalstr);
+
+	updatePotential = zoho.crm.updateRecord(("Potentials"),PotentialID,PotentialUpdateMap);
+}
