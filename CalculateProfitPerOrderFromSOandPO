@@ -1,0 +1,54 @@
+void CalculateProfitPerOrderFromSOandPO(int POID)
+{
+  //INSTRUCTIONS:
+  //Workflow Settings:
+  //Module: Purchase Orders
+  //Triger: Record Edit or Field Update
+  //Criteria: Optional
+  //Action: Instant Action > Custom Function
+  //NOTE: Create an "Order Number" field in SalesOrders and PurchaseOrders Modules that link the two together.
+  //******************************************
+  
+	//Convert the input parameter from Integer to String
+	POIDstr=input.POID.toString();
+	
+	//Get the Purchase Order details
+	resp = zoho.crm.getRecordById("Purchaseorders",input.POID);
+	
+	//Get the ContactID and "Order Number" field from the PO
+	contactID=resp.get("CONTACTID");
+	OrderNumber=resp.get("Order Number");
+	
+	//Search for all POs with the same "Order Number"
+	allPOs = zoho.crm.searchRecords("Purchaseorders","(Order Number|=|" + OrderNumber + ")",0,200);
+	
+	//Calculate the total of all the POs with that "Order Number"
+	POTotal=0;
+	for each po in allPOs
+	{
+		gt=(po.get("Grand Total")).toLong();
+		POTotal=(POTotal  +  gt);
+	}
+
+	//Search for all SOs with the same "Order Number"
+	allSOs = zoho.crm.searchRecords("SalesOrders","(Order Number|=|" + OrderNumber + ")",0,200);
+
+	//Calculate the total of all the SOs with that "Order Number"
+	SOTotal=0;
+	for each so in allSOs
+	{
+		gt=(so.get("Grand Total")).toLong();
+		SOTotal=(SOTotal  +  gt);
+		salesOrderID=so.get("SALESORDERID");
+	}
+
+	//Calculate the Profit per Order
+	profitPerOrder=(SOTotal  -  POTotal);
+
+	//Create Map to update the SO with the Profit per Order
+	UpdateMap=map();
+	UpdateMap.put("Profit per Order",profitPerOrder);
+
+	//Update CRM with the Profit per Order value
+	resp = zoho.crm.updateRecord("SalesOrders",salesOrderID,UpdateMap);
+}
