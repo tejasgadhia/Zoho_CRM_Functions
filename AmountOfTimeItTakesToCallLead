@@ -1,0 +1,33 @@
+void AmountOfTimeItTakesToCallLead(int CallID)
+{
+  //INSTRUCTIONS:
+  //Workflow Settings:
+  //Module: Calls
+  //Triger: Record Creation
+  //Criteria: Optional
+  //Action: Instant Action > Custom Function
+  
+	CallIDIDstr = CallIDID.toString();
+
+	//Map of Call Details
+	CallDetails = zoho.crm.getRecordById("Calls",input.CallID);
+
+	//Extract information from the CallDetails Map
+	CallCreatedTime = CallDetails.get("Created Time");
+	RelatedToID = CallDetails.get("RELATEDTOID").toLong();
+
+	//Map of Related Lead's Details
+	LeadDetails = zoho.crm.getRecordById("Leads", RelatedToID);
+
+	//Extract Created Time of the Lead
+	LeadCreatedTime = LeadDetails.get("Created Time");
+
+	//Calculate Elapsed Time
+	Time = 0.0;
+ 	Time = ((CallCreatedTime - LeadCreatedTime)  /  (1000  *  60  *  60)).round(2);
+
+ 	//Update Lead Record with the Elapsed Time
+ 	UpdateLeadMap=map();
+	UpdateLeadMap.put("Time To Contact",Time);
+	UpdateContact = zoho.crm.updateRecord("Leads",RelatedToID,UpdateLeadMap);
+}
