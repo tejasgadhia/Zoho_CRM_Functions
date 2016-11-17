@@ -1,0 +1,27 @@
+void CalculateProfitPerOrderFromSOandPO(int ContactID)
+{
+  //INSTRUCTIONS:
+  //Workflow Settings:
+  //Module: Contacts
+  //Triger: Record Edit or Field Update
+  //Criteria: Optional
+  //Action: Instant Action > Custom Function
+  //NOTE: Must be used with the CalculateProfitPerOrderFromSOandPO Custom Function and Create a Field "Profit per Order" in the SalesOrders Module. Also create a "Lifetime Value" field in the Contacts Module. 
+  //******************************************
+	//Search for all SOs that are associated with the Contact
+	ContactIDstr = input.ContactID.toString();
+	AllContactSOs = zoho.crm.searchRecordsByPDC("SalesOrders","contactid",ContactIDstr);
+
+	//Calculate Lifetime Value based on Profit per Order
+	LifeTimeValue=0.0;
+	for each rec in AllContactSOs
+	{
+		LTVtemp=(rec.get("Profit per Order")).toDecimal();
+		LifeTimeValue=(LifeTimeValue  +  LTVtemp);
+	}
+	
+	//Update Contact in the CRM with the Lifetime Value
+	UpdateContactMap=map();
+	UpdateContactMap.put("Lifetime Value",LifeTimeValue);
+	UpdateContact = zoho.crm.updateRecord("Contacts",ContactIDstr,UpdateContactMap);
+}
