@@ -1,0 +1,39 @@
+void RecurringPotentials(int PotentialID, date ClosingDate)
+{
+  //INSTRUCTIONS:
+  //Workflow Settings:
+  //Module: Potenetials
+  //Triger: Record Creation or Date Based on Closing Date
+  //Criteria: Optional
+  //Action: Instant Action > Custom Function
+  //******************************************
+
+    PID = input.PotentialID;
+    PIDStr = PID.toString();
+    
+    //Get All details about the current Potential
+    PotentialDetails = zoho.crm.getRecordById("Potentials", PID);
+    
+    //Get details from the current potential that we want to clone to the new potential
+    potentialName = PotentialDetails.get("Potential Name");
+    potentialAmount = PotentialDetails.get("Amount");
+    potentialStage = PotentialDetails.get("Stage");
+    potentialCloseDate = input.ClosingDate;
+    potentialContactID = PotentialDetails.get("CONTACTID");
+    potentialAccountID = PotentialDetails.get("ACCOUNTID");
+    
+    //Take the current Closing Date and add 6 months for the next appointment
+    NewCloseDate = potentialCloseDate.addMonth(6);
+    
+    //Create a map to organize the field names with the new values
+    NewPotentialMap = map();
+    NewPotentialMap.put("Potential Name", potentialName);
+    NewPotentialMap.put("Amount", potentialAmount);
+    NewPotentialMap.put("Stage", potentialStage);
+    NewPotentialMap.put("Closing Date", NewCloseDate);
+    NewPotentialMap.put("CONTACTID", potentialContactID);
+    NewPotentialMap.put("ACCOUNTID", potentialAccountID);
+    
+    //Create the new potential in the CRM with information from the Map created above
+    CreateNewPotential = zoho.crm.create("Potentials", NewPotentialMap);
+}
