@@ -1,0 +1,50 @@
+void DetermineTimeZoneFromAddress (int ContactID)
+{
+  //Get Address information from contact using the current contact's ID. 
+  ContactDetails = zoho.crm.getRecordById("Contacts",input.ContactID);
+  mStreet=ContactDetails.get("Mailing Street");
+  mCity=ContactDetails.get("Mailing City");
+  mState=ContactDetails.get("Mailing State");
+  mZip=ContactDetails.get("Mailing Zip");
+  mCountry=ContactDetails.get("Mailing Country");
+  
+  //Organize the address information into a single line format
+  CompleteAddressTemp=mStreet + ", " + mCity + ", " + mState;
+  
+  //Replace all the spaces with "+" signs so the address can be read by Google
+  GoogleAdd=CompleteAddressTemp.replaceAll(" ",("+"));
+  
+  //Make API call to Google Maps to get the Latitude and Longitude 
+  //To get your API key for Google Maps, follow instructions here: https://developers.google.com/maps/documentation/directions/get-api-key
+  //Enter your API key inside the double quotes below
+  APIKEY="";
+  
+  //Send API call to Google Maps
+  GeocodeAPIURL="https://maps.googleapis.com/maps/api/geocode/xml?key=" + APIKEY + "&address=" + GoogleAdd;
+  
+  //Parse the response Google Maps returns to extract the Latitude and Longitude of the address
+  GoogleMapsResponse = getUrl(GeocodeAPIURL);
+  Lat = GoogleMapsResponse.executeXPath("/GeocodeResponse/result/geometry/location/lat/text()");
+  Lng = GoogleMapsResponse.executeXPath("/GeocodeResponse/result/geometry/location/lng/text()");
+  
+  //Get TimeZoneDB API Key by going to this site and registering: https://timezonedb.com/api
+  TZDB_APIKEY = "";
+  
+  //Make API call to TimeZoneDB to find out the Time Zone at given coordinates 
+  TimeZoneAPIURL="http://api.timezonedb.com/?key=" + TXDB_APIKEY + "&lat=" + Lat + "&lng=" + Lng;
+  
+  //Parse response from TimeZoneDB to get the GMT Offset and TimeZone Abbreviation
+  TimeZoneResponse = getUrl(TimeZoneAPIURL);
+  TimeZoneAbr = TimeZoneResponse.executeXPath("/result/abbreviation/text()");
+  GMTOffset=((TimeZoneResponse.executeXPath("/result/gmtOffset/text()")).toLong()  /  3600);
+  
+  //Format the above values so they can be displayed nicely in the CRM Field
+  TimeZoneFieldValue=TimeZoneAbr + " (GMT " + GMTOffset + ")";
+  
+  //Update the CRM contact
+  //Make sure you have a field created in your Contacts module called "TimeZone"
+  UpdateMap=map();
+  UpdateMap.put("TimeZone",TimeZoneFieldValue);
+  ContactIDstr=input.ContactID.toString();
+  UpdateContact = zoho.crm.updateRecord("Contacts",ContactIDstr,UpdateMap);
+}
