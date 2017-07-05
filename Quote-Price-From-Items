@@ -1,0 +1,96 @@
+getAllProduct = zoho.crm.getRecordById("Quotes",input.Quote_Id);
+//info getAllProduct;
+list_product=(getAllProduct).get("product");
+tot_Discount=(getAllProduct).get(("Discount"));
+tot_Tax=(getAllProduct).get("Tax");
+update_product_list=List();
+Sub_Total=0.0;
+for each recProductList in list_product.toJSONList()
+{
+// get Product id from Quote
+pro_detail=map();
+mapProductFL=recProductList.toMap();
+mapProductFLList=mapProductFL.get("Product Id");
+quoteQuantity=mapProductFL.get("Quantity");
+quoteDiscount=mapProductFL.get(("Discount"));
+quoteTax=mapProductFL.get("Tax");
+//info mapProductFLList;
+// get pricebook details related to product
+AUTHTOKEN = "";
+getPricebookdetails = getUrl((("https://crm.zoho.com/crm/private/json/PriceBooks/getRelatedRecords?authtoken=" + AUTHTOKEN + "&scope=crmapi&id=") + mapProductFLList) + "&parentModule=Products");
+getPricebook_res=(getPricebookdetails).toMap();
+getres=((getPricebook_res).get("response")).toMap();
+getresult=((getres).get("result")).toMap();
+getPriceBook=((getresult).get("PriceBooks")).toMap();
+//info "getPriceBook " + getPriceBook;
+getRow1=(getPriceBook).get("row");
+info ("getRow ") + getRow1;
+if(getRow1 != null)
+{
+getRow=(getPriceBook).get("row").toJSONList();
+for each getRowPrice in getRow
+{
+getRowPrice_map=(getRowPrice).toMap();
+getFL=(getRowPrice_map).get("FL");
+getFL_Map=getFL.toJSONList();
+st_range="";
+ed_range="";
+list_price="";
+for each checkPriceBook in getFL_Map
+{
+childPriceBook=checkPriceBook.toMap();
+//info "childPriceBook " + childPriceBook;
+if(childPriceBook.get("val") == "Start Range")
+{
+st_range=childPriceBook.get("content");
+}
+if(childPriceBook.get("val") == "End Range")
+{
+ed_range=childPriceBook.get("content");
+}
+if(childPriceBook.get("val") == "List Price")
+{
+list_price=childPriceBook.get("content");
+}
+}
+//info "st_range "+st_range;
+//info "ed_range "+ed_range;
+//info "quantity" + quoteQuantity;
+//info "list_price "+list_price;
+// Check quantity between start and end range
+if((quoteQuantity.toLong() >= st_range.toLong()) && (quoteQuantity.toLong() <= ed_range.toLong()))
+{
+//info "st_range " + st_range;
+//info "ed_range " + ed_range;
+//info "quantity" + quoteQuantity;
+//info "id" + mapProductFLList;
+update_map=map();
+update_map.put("Product Id",mapProductFLList);
+update_map.put("List Price",list_price);
+total=(ifnull(list_price.toDecimal(),0.0) * ifnull(quoteQuantity.toDecimal(),0.0));
+afterDiscount=(total - ifnull((quoteDiscount).toDecimal(),0.0));
+afterTax=(afterDiscount + ifnull(quoteTax.toDecimal(),0.0));
+update_map.put("Total",total);
+update_map.put("Net Total",afterTax);
+update_map.put(("Total After Discount"),afterDiscount);
+update_product_list.add(update_map);
+Sub_Total=(ifnull(Sub_Total,0.0) + ifnull(afterTax,0.0));
+//info "dsgdsgdfgds";
+}
+}
+}
+//listFL=getFL.toJSONList();
+//info "listFL "+listFL;
+}
+grand_total=(ifnull(Sub_Total,0.0) + ifnull(tot_Tax.toDecimal(),0.0) - ifnull((tot_Discount).toDecimal(),0.0));
+mainMap=map();
+mainMap.put("Sub Total",Sub_Total);
+mainMap.put("Grand Total",grand_total);
+mainMap.put("Products",update_product_list);
+//info "update_product_list" + update_product_list;
+//tot_map=map();
+//tot_map.put("xmlData",mainMap);
+//update Quote
+//updateQuote = zoho.crm.updateRecord("Quotes", input.Quote_Id.toString(), tot_map);
+updateQuote = zoho.crm.updateRecord("Quotes",input.Quote_Id.toString(),mainMap);
+info updateQuote; 
