@@ -1,0 +1,22 @@
+resp = getUrl("https://api.towerdata.com/v5/ev?api_key=BLAHBLAHBLAHBLAHBLAHBLAH&email=" + Email);
+info resp;
+
+stringValue = "";
+respMap = resp.toMap();
+info respMap;
+
+for each rec in respMap.keys()
+{
+
+    if(rec != "email_validation")
+    {
+        stringValue = stringValue + rec + ":" + resp.get(rec) + ", ";
+    }
+}
+info stringValue;
+
+// Use the below function to update a field in Zoho CRM
+myMap = Map();
+myMap.put("Description",stringValue);
+updateValue = zoho.crm.update("Leads",leadID,myMap);
+info "update " + updateValue;
