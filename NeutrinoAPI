@@ -1,0 +1,45 @@
+//Parse, validate and get location information about a phone number with Neutrino API
+apiKey = "BLAHBLAHBLAHBLAH";
+userId = "yourid";
+url = "https://neutrinoapi.com/phone-validate";
+if(!isBlank(Mobile))
+{
+  phoneNumber = Mobile;
+}
+else
+{
+  phoneNumber = Phone;
+}
+
+myMap = Map();
+myMap.put("api-key",apiKey);
+myMap.put("user-id",userId);
+myMap.put("number",phoneNumber);
+info myMap;
+resp = postUrl(url,myMap);
+info resp;
+getStatus = resp.get("valid");
+
+if(getStatus == false)
+{
+  taskInfo = {"Subject":"Phone not valid","Description":"Phone number is not valid. Please check. ","SEMODULE":"Leads","SEID":LeadID};
+  response = zoho.crm._create("Tasks",taskInfo); 
+  info "response" + response;
+}
+
+else
+{
+  getType = resp.get("type");
+  updateMap = Map();
+
+  if(getType == "mobile")
+  {
+    updateMap.put("Mobile",phoneNumber);
+  }
+  else
+  {
+    updateMap.put("Phone",phoneNumber);
+  }
+  response1 = zoho.crm._updateRecord("Leads",LeadID.toString(),updateMap);
+  info response1;
+}
